@@ -739,7 +739,7 @@ RULES: 1) Only use ingredients the user has plus salt, pepper, oil, water, basic
 Return: {"quick_pick":{"name":"","reason":""},"meals":[{"name":"","minutes":0,"difficulty":"","badge":"","description":"","missing":[],"steps":["","",""],"elevation_tip":"","swap":""}]}
 Badge values: "Fastest" or "Under 30 min" or "Worth the effort"`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'YOUR_ANTHROPIC_API_KEY_HERE','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:sys,messages:[{role:'user',content:usr}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:sys,messages:[{role:'user',content:usr}]})});
     const data=await res.json();const raw=data.content?.[0]?.text||'';
     let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{parsed=fallbackMeals();}
     renderResults(parsed,ingredients);
