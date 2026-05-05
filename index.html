@@ -739,7 +739,7 @@ RULES: 1) Only use ingredients the user has plus salt, pepper, oil, water, basic
 Return: {"quick_pick":{"name":"","reason":""},"meals":[{"name":"","minutes":0,"difficulty":"","badge":"","description":"","missing":[],"steps":["","",""],"elevation_tip":"","swap":""}]}
 Badge values: "Fastest" or "Under 30 min" or "Worth the effort"`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:sys,messages:[{role:'user',content:usr}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'YOUR_ANTHROPIC_API_KEY_HERE','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:sys,messages:[{role:'user',content:usr}]})});
     const data=await res.json();const raw=data.content?.[0]?.text||'';
     let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{parsed=fallbackMeals();}
     renderResults(parsed,ingredients);
@@ -829,7 +829,7 @@ function showHistoryScreen(){
   else{list.innerHTML=state.history.map(h=>`<div class="history-item"><div class="history-meal-name">${h.name}</div><div class="history-meta">${h.date} · ${h.minutes} min</div></div>`).join('');}
   showScreen('s-history');
 }
-const WEBHOOK_URL = 'https://primary-production-80344.up.railway.app/webhook/89135ef6-9558-4536-96ed-4e796bf1b4ba';
+
 // Chat
 let chatOpen=false;const chatHistory=[];
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('chat-drawer').classList.toggle('open',chatOpen);document.getElementById('chat-overlay').classList.toggle('visible',chatOpen);if(chatOpen&&chatHistory.length===0)addChatMsg('ai',`Hi ${state.name||'there'}! I know your recipe. Ask me anything while you cook.`);}
@@ -842,7 +842,7 @@ async function sendChat(){
   const loadDiv=addChatMsg('ai loading','Thinking...');
   const sys=`You are a cooking assistant. Context: ${state.chatContext}. Answer in 1 to 3 short sentences. Be direct and practical. No filler.`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:chatHistory.slice(-6)})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'YOUR_ANTHROPIC_API_KEY_HERE','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:chatHistory.slice(-6)})});
     const data=await res.json();const reply=data.content?.[0]?.text||'Sorry, try again.';
     loadDiv.classList.remove('loading');loadDiv.textContent=reply;chatHistory.push({role:'assistant',content:reply});
   }catch{loadDiv.textContent='Connection issue. Try again.';loadDiv.classList.remove('loading');}
@@ -858,8 +858,7 @@ function captureEmail(){
 }
 
 // Webhook
-// Webhook
-const WEBHOOK_URL = 'https://primary-production-80344.up.railway.app/webhook/89135ef6-9558-4536-96ed-4e796bf1b4ba' ;
+const WEBHOOK_URL='https://primary-production-80344.up.railway.app/webhook/89135ef6-9558-4536-96ed-4e796bf1b4ba';
 async function postToWebhook(payload){if(!WEBHOOK_URL){console.log('SnapMeal data:',JSON.stringify(payload,null,2));return;}try{await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}catch{}}
 
 // Survey
