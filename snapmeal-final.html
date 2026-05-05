@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SnapMeal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --teal: #1D9E75; --teal-light: #eaf6f1; --teal-mid: #2db88a; --teal-dark: #0d6b4f;
+  --cream: #f8f6f2; --white: #ffffff; --ink: #1a1a18; --ink-70: #4a4a47;
+  --ink-40: #9a9a96; --ink-15: #e8e8e5;
+  --serif: 'Lora', Georgia, serif; --sans: 'Outfit', 'Helvetica Neue', sans-serif;
+}
+html, body { height: 100%; }
+body { font-family: var(--sans); background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; min-height: 100vh; animation: slideUp 0.28s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.top-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; background: var(--white); border-bottom: 1px solid var(--ink-15); flex-shrink: 0; }
+.wordmark { font-family: var(--serif); font-size: 21px; font-weight: 500; color: var(--ink); letter-spacing: -0.3px; }
+.wordmark em { color: var(--teal); font-style: normal; }
+.beta-pill { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-dark); border: 1px solid var(--teal); padding: 3px 9px; border-radius: 2px; }
+.progress-track { height: 2px; background: var(--ink-15); flex-shrink: 0; }
+.progress-fill { height: 2px; background: var(--teal); transition: width 0.4s ease; }
+.content { flex: 1; overflow-y: auto; padding: 28px 20px 20px; max-width: 520px; margin: 0 auto; width: 100%; }
+.foot { padding: 16px 20px; background: var(--white); border-top: 1px solid var(--ink-15); flex-shrink: 0; }
+.foot-inner { max-width: 520px; margin: 0 auto; }
+.eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+.heading { font-family: var(--serif); font-size: 26px; font-weight: 400; line-height: 1.2; color: var(--ink); letter-spacing: -0.3px; margin-bottom: 8px; }
+.subtext { font-size: 14px; font-weight: 300; color: var(--ink-70); line-height: 1.6; margin-bottom: 24px; }
+.btn { width: 100%; padding: 15px 20px; font-family: var(--sans); font-size: 14px; font-weight: 500; letter-spacing: 0.03em; border: none; border-radius: 4px; cursor: pointer; transition: all 0.18s; }
+.btn-primary { background: var(--teal); color: var(--white); }
+.btn-primary:hover { background: var(--teal-dark); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary { background: none; color: var(--ink-70); border: 1px solid var(--ink-15); margin-top: 8px; }
+.btn-secondary:hover { border-color: var(--ink-40); color: var(--ink); }
+.btn-ghost { background: none; border: none; color: var(--ink-40); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; font-family: var(--sans); display: block; text-align: center; margin-top: 12px; width: 100%; }
+.choice-list { display: flex; flex-direction: column; gap: 6px; }
+.choice-row { display: flex; align-items: center; justify-content: space-between; background: var(--white); border: 1.5px solid var(--ink-15); border-radius: 8px; padding: 13px 16px; cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
+.choice-row:hover { border-color: var(--teal-mid); }
+.choice-row.selected { border-color: var(--teal); background: var(--teal-light); }
+.choice-row-text { font-size: 13px; font-weight: 400; color: var(--ink); }
+.choice-row.selected .choice-row-text { color: var(--teal-dark); font-weight: 500; }
+.check-circle { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-15); background: var(--cream); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.choice-row.selected .check-circle { background: var(--teal); border-color: var(--teal); }
+.check-circle::after { content: ''; display: none; width: 6px; height: 6px; border-radius: 50%; background: white; }
+.choice-row.selected .check-circle::after { display: block; }
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.choice-card { background: var(--white); border: 1.5px solid var(--ink-15); border-radius: 8px; padding: 14px 12px; cursor: pointer; transition: all 0.15s; text-align: left; font-family: var(--sans); }
+.choice-card:hover { border-color: var(--teal-mid); }
+.choice-card.selected { border-color: var(--teal); background: var(--teal-light); }
+.choice-card-label { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 3px; }
+.choice-card.selected .choice-card-label { color: var(--teal-dark); }
+.choice-card-sub { font-size: 11px; font-weight: 300; color: var(--ink-40); line-height: 1.4; }
+.tag-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tag-btn { padding: 8px 14px; border: 1.5px solid var(--ink-15); border-radius: 3px; background: var(--white); font-family: var(--sans); font-size: 12px; font-weight: 400; color: var(--ink-70); cursor: pointer; transition: all 0.15s; }
+.tag-btn:hover { border-color: var(--teal-mid); }
+.tag-btn.selected { background: var(--teal); border-color: var(--teal); color: var(--white); }
+.divider { height: 1px; background: var(--ink-15); margin: 20px 0; }
+.method-row { display: flex; gap: 6px; margin-bottom: 20px; }
+.method-pill { flex: 1; padding: 10px 6px; background: var(--white); border: 1.5px solid var(--ink-15); border-radius: 6px; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--ink-40); cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; letter-spacing: 0.03em; }
+.method-pill svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.method-pill.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+.input-panel { display: none; }
+.input-panel.active { display: block; }
+.photo-drop { position: relative; background: var(--white); border: 1.5px dashed var(--ink-15); border-radius: 8px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s; overflow: hidden; margin-bottom: 12px; }
+.photo-drop:hover { border-color: var(--teal); background: var(--teal-light); }
+.photo-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-drop-icon { width: 40px; height: 40px; margin: 0 auto 12px; background: var(--ink-15); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.photo-drop-icon svg { width: 20px; height: 20px; stroke: var(--ink-70); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.photo-drop-title { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+.photo-drop-sub { font-size: 12px; font-weight: 300; color: var(--ink-40); }
+.photo-preview-block { display: none; margin-bottom: 12px; position: relative; }
+.photo-preview-block img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; display: block; border: 1px solid var(--ink-15); }
+.photo-change { position: absolute; bottom: 10px; right: 10px; background: rgba(255,255,255,0.92); border: 1px solid var(--ink-15); border-radius: 4px; padding: 5px 10px; font-size: 11px; font-weight: 500; font-family: var(--sans); cursor: pointer; color: var(--ink); }
+.ingredient-builder { background: var(--white); border: 1px solid var(--ink-15); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+.ingredient-list-header { padding: 12px 16px; border-bottom: 1px solid var(--ink-15); display: flex; align-items: center; justify-content: space-between; }
+.ingredient-list-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-40); }
+.ingredient-count { font-size: 11px; font-weight: 500; color: var(--teal); }
+.ingredient-row-item { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--ink-15); gap: 10px; }
+.ingredient-name { flex: 1; font-size: 14px; font-weight: 400; color: var(--ink); }
+.ingredient-qty { display: flex; align-items: center; gap: 6px; }
+.qty-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--ink-15); background: var(--cream); font-size: 14px; color: var(--ink-70); cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--sans); line-height: 1; transition: all 0.15s; }
+.qty-btn:hover { border-color: var(--teal); color: var(--teal); }
+.qty-num { font-size: 13px; font-weight: 500; color: var(--ink); min-width: 24px; text-align: center; }
+.qty-unit { font-size: 12px; color: var(--ink-40); min-width: 40px; }
+.remove-btn { width: 22px; height: 22px; background: none; border: none; cursor: pointer; color: var(--ink-15); display: flex; align-items: center; justify-content: center; transition: color 0.15s; }
+.remove-btn:hover { color: #c0392b; }
+.remove-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.add-ingredient-row { padding: 12px 16px; display: flex; gap: 8px; }
+.ingredient-search { flex: 1; border: 1px solid var(--ink-15); border-radius: 4px; padding: 9px 12px; font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s; }
+.ingredient-search:focus { border-color: var(--teal); }
+.ingredient-search::placeholder { color: var(--ink-40); }
+.add-ing-btn { background: var(--teal); color: white; border: none; border-radius: 4px; padding: 9px 16px; font-size: 13px; font-weight: 500; font-family: var(--sans); cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.add-ing-btn:hover { background: var(--teal-dark); }
+.quick-add-section { margin-bottom: 12px; }
+.quick-add-label { font-size: 11px; color: var(--ink-40); margin-bottom: 8px; font-weight: 400; }
+.quick-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-tag { padding: 6px 12px; background: var(--white); border: 1px solid var(--ink-15); border-radius: 3px; font-size: 12px; font-weight: 400; color: var(--ink-70); cursor: pointer; font-family: var(--sans); transition: all 0.12s; }
+.quick-tag:hover { border-color: var(--teal); background: var(--teal-light); color: var(--teal-dark); }
+.voice-center { background: var(--white); border: 1px solid var(--ink-15); border-radius: 8px; padding: 32px 20px; text-align: center; margin-bottom: 12px; }
+.record-btn-outer { width: 76px; height: 76px; border-radius: 50%; border: 1.5px solid var(--ink-15); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; cursor: pointer; transition: border-color 0.2s; }
+.record-btn-outer:hover { border-color: var(--teal); }
+.record-btn-outer.recording { border-color: #c0392b; animation: voicePulse 1.2s ease-in-out infinite; }
+@keyframes voicePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.2); } 50% { box-shadow: 0 0 0 12px rgba(192,57,43,0); } }
+.record-btn-inner { width: 52px; height: 52px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.record-btn-outer.recording .record-btn-inner { background: #c0392b; }
+.record-btn-inner svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.voice-state { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+.voice-hint { font-size: 12px; font-weight: 300; color: var(--ink-40); }
+.voice-box { display: none; background: var(--cream); border-radius: 6px; padding: 12px 14px; font-size: 14px; font-weight: 300; color: var(--ink); line-height: 1.5; text-align: left; min-height: 48px; border: 1px solid var(--ink-15); margin-top: 14px; }
+.privacy-note { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 300; color: var(--ink-40); padding: 10px 0; }
+.privacy-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+.error-bar { display: none; background: #fdf0ee; border-left: 3px solid #c0392b; border-radius: 0 4px 4px 0; padding: 10px 12px; font-size: 12px; color: #8b1a1a; margin-bottom: 10px; }
+.profile-bar { display: flex; align-items: center; gap: 10px; background: var(--teal-light); border-radius: 6px; padding: 10px 14px; margin-bottom: 20px; }
+.profile-bar-text { font-size: 12px; font-weight: 400; color: var(--teal-dark); line-height: 1.4; }
+.profile-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.profile-icon svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.loading-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+.load-bar-wrap { width: 200px; height: 2px; background: var(--ink-15); border-radius: 1px; margin: 24px 0; overflow: hidden; }
+.load-bar { height: 2px; background: var(--teal); border-radius: 1px; width: 0; transition: width 0.6s ease; }
+.load-steps { text-align: left; width: 100%; max-width: 280px; }
+.load-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; font-weight: 300; color: var(--ink-15); border-bottom: 1px solid var(--ink-15); transition: color 0.35s; }
+.load-step:last-child { border-bottom: none; }
+.load-step.on { color: var(--ink-70); }
+.load-step.done { color: var(--teal); }
+.step-pip { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.results-head { margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid var(--ink-15); }
+.user-greeting { font-size: 12px; font-weight: 400; color: var(--ink-40); margin-bottom: 4px; }
+.quick-pick-banner { background: var(--ink); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+.qp-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-mid); margin-bottom: 6px; }
+.qp-name { font-family: var(--serif); font-size: 18px; font-weight: 400; color: var(--white); margin-bottom: 4px; letter-spacing: -0.2px; }
+.qp-reason { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.6); line-height: 1.5; }
+.meal-card { background: var(--white); border: 1px solid var(--ink-15); border-radius: 10px; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; }
+.meal-card:hover { box-shadow: 0 3px 18px rgba(0,0,0,0.07); }
+.meal-card.featured { border-color: var(--teal); }
+.meal-visual { width: 100%; height: 110px; display: flex; align-items: center; justify-content: center; }
+.mv-1 { background: linear-gradient(145deg, #eaf6f1 0%, #b8e0d0 100%); }
+.mv-2 { background: linear-gradient(145deg, #f0f4e8 0%, #ccdea8 100%); }
+.mv-3 { background: linear-gradient(145deg, #f6f0e8 0%, #e0c8a0 100%); }
+.meal-visual-inner { text-align: center; }
+.meal-visual-num { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.5; }
+.mv-1 .meal-visual-num { color: var(--teal-dark); }
+.mv-2 .meal-visual-num { color: #3a5a0a; }
+.mv-3 .meal-visual-num { color: #7a5010; }
+.meal-visual-name { font-family: var(--serif); font-size: 18px; font-weight: 400; line-height: 1.2; max-width: 220px; }
+.mv-1 .meal-visual-name { color: var(--teal-dark); }
+.mv-2 .meal-visual-name { color: #2a4a04; }
+.mv-3 .meal-visual-name { color: #5a3808; }
+.meal-body { padding: 14px 16px; cursor: pointer; }
+.meal-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.meal-badge { font-size: 10px; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase; color: var(--teal-dark); background: var(--teal-light); padding: 3px 8px; border-radius: 2px; }
+.meal-time-tag { font-size: 12px; color: var(--ink-40); font-weight: 300; }
+.meal-name { font-family: var(--serif); font-size: 19px; font-weight: 400; color: var(--ink); line-height: 1.25; margin-bottom: 4px; letter-spacing: -0.2px; }
+.meal-diff { font-size: 12px; font-weight: 300; color: var(--ink-40); }
+.missing-tag { display: inline-flex; align-items: center; gap: 4px; background: #fdf0ee; color: #8b1a1a; border-radius: 3px; padding: 3px 8px; font-size: 10px; font-weight: 500; margin-top: 6px; }
+.expand-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 14px; cursor: pointer; }
+.expand-label { font-size: 12px; font-weight: 500; color: var(--teal); letter-spacing: 0.04em; }
+.chevron-icon { width: 16px; height: 16px; stroke: var(--teal); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.25s; }
+.meal-card.open .chevron-icon { transform: rotate(180deg); }
+.steps-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.meal-card.open .steps-panel { max-height: 700px; }
+.steps-inner { padding: 0 16px 16px; border-top: 1px solid var(--ink-15); }
+.steps-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-40); padding: 14px 0 10px; }
+.step-line { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--ink-15); align-items: flex-start; cursor: pointer; transition: opacity 0.2s; user-select: none; }
+.step-line:last-of-type { border-bottom: none; }
+.step-line.checked { opacity: 0.45; }
+.step-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink-15); background: var(--cream); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 1px; }
+.step-line.checked .step-check { background: var(--teal); border-color: var(--teal); }
+.step-check-inner { width: 8px; height: 8px; border-radius: 50%; background: white; display: none; }
+.step-line.checked .step-check-inner { display: block; }
+.step-t { font-size: 13px; font-weight: 300; color: var(--ink); line-height: 1.55; flex: 1; }
+.elevation-tip { background: var(--teal-light); border-radius: 6px; padding: 10px 12px; margin-top: 12px; font-size: 12px; color: var(--teal-dark); line-height: 1.55; }
+.elevation-tip strong { font-weight: 500; }
+.swap-note { background: var(--cream); border-radius: 5px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: var(--ink-70); font-weight: 300; line-height: 1.5; border-left: 2px solid var(--teal); }
+.swap-note strong { font-weight: 500; color: var(--teal-dark); }
+.made-btn { width: 100%; background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal); border-radius: 4px; padding: 11px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; margin-top: 14px; }
+.made-btn:hover:not(:disabled) { background: var(--teal); color: var(--white); }
+.made-btn.done { background: var(--ink-15); border-color: var(--ink-15); color: var(--ink-40); cursor: default; }
+.made-btn:disabled:not(.done) { opacity: 0.45; cursor: not-allowed; }
+.capture-card { background: var(--ink); border-radius: 10px; padding: 24px 20px; margin-bottom: 16px; }
+.capture-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-mid); margin-bottom: 8px; }
+.capture-heading { font-family: var(--serif); font-size: 20px; font-weight: 400; line-height: 1.25; margin-bottom: 6px; color: var(--white); }
+.capture-sub { font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 16px; }
+.email-row { display: flex; gap: 8px; }
+.email-input { flex: 1; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 11px 14px; font-family: var(--sans); font-size: 13px; color: var(--white); background: rgba(255,255,255,0.1); outline: none; transition: border-color 0.15s; }
+.email-input:focus { border-color: var(--teal-mid); }
+.email-input::placeholder { color: rgba(255,255,255,0.35); }
+.email-submit { background: var(--teal); color: var(--white); border: none; border-radius: 4px; padding: 11px 16px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.email-submit:hover { background: var(--teal-mid); }
+.capture-legal { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 10px; font-weight: 300; }
+.history-empty { text-align: center; padding: 40px 20px; color: var(--ink-40); font-size: 13px; font-weight: 300; line-height: 1.7; }
+.history-item { background: var(--white); border: 1px solid var(--ink-15); border-radius: 8px; padding: 14px 16px; margin-bottom: 8px; }
+.history-meal-name { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+.history-meta { font-size: 11px; color: var(--ink-40); font-weight: 300; }
+.q-block { background: var(--white); border: 1px solid var(--ink-15); border-radius: 8px; padding: 16px; margin-bottom: 10px; }
+.survey-q { font-size: 14px; font-weight: 400; color: var(--ink); margin-bottom: 12px; line-height: 1.4; }
+.scale-row { display: flex; gap: 6px; }
+.scale-n { flex: 1; height: 40px; border: 1.5px solid var(--ink-15); border-radius: 4px; background: var(--cream); font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--ink-40); cursor: pointer; transition: all 0.15s; }
+.scale-n:hover { border-color: var(--teal-mid); }
+.scale-n.on { background: var(--teal); border-color: var(--teal); color: var(--white); }
+.scale-ends { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10px; color: var(--ink-40); }
+.opt-list { display: flex; flex-direction: column; gap: 6px; }
+.opt-btn { padding: 11px 14px; background: var(--cream); border: 1.5px solid var(--ink-15); border-radius: 4px; font-family: var(--sans); font-size: 13px; font-weight: 300; color: var(--ink); text-align: left; cursor: pointer; transition: all 0.13s; }
+.opt-btn:hover { border-color: var(--teal-mid); }
+.opt-btn.on { background: var(--teal-light); border-color: var(--teal); color: var(--teal-dark); font-weight: 400; }
+.open-field { width: 100%; border: 1.5px solid var(--ink-15); border-radius: 4px; padding: 11px 14px; font-family: var(--sans); font-size: 13px; font-weight: 300; color: var(--ink); background: var(--cream); resize: none; height: 84px; outline: none; line-height: 1.5; transition: border-color 0.15s; }
+.open-field:focus { border-color: var(--teal); }
+.open-field::placeholder { color: var(--ink-40); }
+.thanks-content { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 28px; max-width: 480px; margin: 0 auto; width: 100%; }
+.thanks-rule { width: 36px; height: 2px; background: var(--teal); margin-bottom: 24px; }
+.thanks-h { font-family: var(--serif); font-size: 28px; font-weight: 400; line-height: 1.2; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.3px; }
+.thanks-p { font-size: 14px; font-weight: 300; color: var(--ink-70); line-height: 1.65; margin-bottom: 28px; }
+/* CHAT */
+.chat-fab { position: fixed; bottom: 24px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--teal); border: none; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(29,158,117,0.35); z-index: 300; transition: transform 0.15s; }
+.chat-fab:hover { transform: scale(1.06); }
+.chat-fab svg { width: 24px; height: 24px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.chat-fab.visible { display: flex; }
+.chat-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 520px; margin: 0 auto; background: var(--white); border-radius: 16px 16px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,0.12); z-index: 400; transform: translateY(100%); transition: transform 0.3s ease; max-height: 70vh; display: flex; flex-direction: column; }
+.chat-drawer.open { transform: translateY(0); }
+.chat-drawer-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ink-15); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.chat-drawer-title { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--ink); }
+.chat-drawer-sub { font-size: 11px; color: var(--ink-40); margin-top: 1px; }
+.chat-close { background: none; border: none; cursor: pointer; color: var(--ink-40); font-size: 22px; font-family: var(--sans); padding: 0; line-height: 1; }
+.chat-suggestions { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px 4px; }
+.chat-sug { padding: 6px 10px; background: var(--teal-light); border: none; border-radius: 3px; font-size: 11px; color: var(--teal-dark); cursor: pointer; font-family: var(--sans); transition: background 0.15s; }
+.chat-sug:hover { background: var(--teal); color: white; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { max-width: 85%; padding: 10px 13px; border-radius: 10px; font-size: 13px; line-height: 1.5; font-weight: 300; }
+.chat-msg.ai { background: var(--cream); color: var(--ink); border-bottom-left-radius: 3px; align-self: flex-start; }
+.chat-msg.user { background: var(--teal); color: white; border-bottom-right-radius: 3px; align-self: flex-end; font-weight: 400; }
+.chat-msg.loading { opacity: 0.6; font-style: italic; }
+.chat-input-row { padding: 12px 16px; border-top: 1px solid var(--ink-15); display: flex; gap: 8px; flex-shrink: 0; }
+.chat-input { flex: 1; border: 1px solid var(--ink-15); border-radius: 20px; padding: 9px 14px; font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s; }
+.chat-input:focus { border-color: var(--teal); }
+.chat-input::placeholder { color: var(--ink-40); }
+.chat-send { background: var(--teal); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+.chat-send:hover { background: var(--teal-dark); }
+.chat-send svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 350; display: none; }
+.chat-overlay.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ONBOARD 1 -->
+<div class="screen active" id="s-ob1">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="progress-track"><div class="progress-fill" style="width:25%"></div></div>
+  <div class="content">
+    <div class="eyebrow">Step 1 of 4</div>
+    <div class="heading">How often do you cook at home?</div>
+    <div class="subtext">We tailor meal suggestions to where you actually are, not where you think you should be.</div>
+    <div class="choice-list" id="cook-freq">
+      <div class="choice-row" onclick="pick('cook-freq',this,'rarely')"><span class="choice-row-text">Rarely, maybe once or twice a week</span><div class="check-circle"></div></div>
+      <div class="choice-row" onclick="pick('cook-freq',this,'sometimes')"><span class="choice-row-text">Sometimes, a few times a week when I get around to it</span><div class="check-circle"></div></div>
+      <div class="choice-row" onclick="pick('cook-freq',this,'often')"><span class="choice-row-text">Often, most weeknights though I still get stuck</span><div class="check-circle"></div></div>
+      <div class="choice-row" onclick="pick('cook-freq',this,'daily')"><span class="choice-row-text">Almost daily, cooking is part of my routine</span><div class="check-circle"></div></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-inner"><button class="btn btn-primary" id="ob1-next" onclick="showScreen('s-ob2')" disabled>Continue</button></div></div>
+</div>
+
+<!-- ONBOARD 2 -->
+<div class="screen" id="s-ob2">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="progress-track"><div class="progress-fill" style="width:50%"></div></div>
+  <div class="content">
+    <div class="eyebrow">Step 2 of 4</div>
+    <div class="heading">How do you cook?</div>
+    <div class="subtext">No judgment here. This changes which recipes we show you.</div>
+    <div class="choice-grid" id="skill-level">
+      <div class="choice-card" onclick="pickGrid('skill-level',this,'beginner')"><div class="choice-card-label">Beginner</div><div class="choice-card-sub">I follow recipes closely and keep it simple</div></div>
+      <div class="choice-card" onclick="pickGrid('skill-level',this,'home cook')"><div class="choice-card-label">Home cook</div><div class="choice-card-sub">I improvise sometimes and know my basics</div></div>
+      <div class="choice-card" onclick="pickGrid('skill-level',this,'confident')"><div class="choice-card-label">Confident</div><div class="choice-card-sub">I cook without recipes and experiment freely</div></div>
+      <div class="choice-card" onclick="pickGrid('skill-level',this,'advanced')"><div class="choice-card-label">Advanced</div><div class="choice-card-sub">I cook complex dishes and understand techniques</div></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-inner"><button class="btn btn-primary" id="ob2-next" onclick="showScreen('s-ob3')" disabled>Continue</button><button class="btn-ghost" onclick="showScreen('s-ob1')">Back</button></div></div>
+</div>
+
+<!-- ONBOARD 3 -->
+<div class="screen" id="s-ob3">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="progress-track"><div class="progress-fill" style="width:75%"></div></div>
+  <div class="content">
+    <div class="eyebrow">Step 3 of 4</div>
+    <div class="heading">Any dietary needs?</div>
+    <div class="subtext">Select everything that applies. We will never suggest something you cannot eat.</div>
+    <div class="tag-grid" id="dietary-tags">
+      <button class="tag-btn" onclick="toggleTag(this,'none')">No restrictions</button>
+      <button class="tag-btn" onclick="toggleTag(this,'vegetarian')">Vegetarian</button>
+      <button class="tag-btn" onclick="toggleTag(this,'vegan')">Vegan</button>
+      <button class="tag-btn" onclick="toggleTag(this,'gluten-free')">Gluten free</button>
+      <button class="tag-btn" onclick="toggleTag(this,'dairy-free')">Dairy free</button>
+      <button class="tag-btn" onclick="toggleTag(this,'nut-free')">Nut free</button>
+      <button class="tag-btn" onclick="toggleTag(this,'halal')">Halal</button>
+      <button class="tag-btn" onclick="toggleTag(this,'kosher')">Kosher</button>
+      <button class="tag-btn" onclick="toggleTag(this,'low-carb')">Low carb</button>
+      <button class="tag-btn" onclick="toggleTag(this,'pescatarian')">Pescatarian</button>
+    </div>
+    <div class="divider"></div>
+    <div class="eyebrow" style="margin-top:0">Cooking for how many people?</div>
+    <div class="choice-grid" id="serving-size">
+      <div class="choice-card" onclick="pickGrid('serving-size',this,'1')"><div class="choice-card-label">Just me</div><div class="choice-card-sub">1 serving</div></div>
+      <div class="choice-card" onclick="pickGrid('serving-size',this,'2')"><div class="choice-card-label">Two people</div><div class="choice-card-sub">2 servings</div></div>
+      <div class="choice-card" onclick="pickGrid('serving-size',this,'family')"><div class="choice-card-label">Small family</div><div class="choice-card-sub">3 to 4 servings</div></div>
+      <div class="choice-card" onclick="pickGrid('serving-size',this,'crowd')"><div class="choice-card-label">Group</div><div class="choice-card-sub">5 or more servings</div></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-inner"><button class="btn btn-primary" id="ob3-next" onclick="showScreen('s-ob4')" disabled>Continue</button><button class="btn-ghost" onclick="showScreen('s-ob2')">Back</button></div></div>
+</div>
+
+<!-- ONBOARD 4 -->
+<div class="screen" id="s-ob4">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+  <div class="content">
+    <div class="eyebrow">Step 4 of 4</div>
+    <div class="heading">What should we call you?</div>
+    <div class="subtext">First name only is fine.</div>
+    <input type="text" id="user-name" placeholder="Your first name" style="width:100%;border:1.5px solid var(--ink-15);border-radius:6px;padding:14px 16px;font-family:var(--sans);font-size:16px;color:var(--ink);background:var(--cream);outline:none;transition:border-color 0.15s;" oninput="checkName()" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--ink-15)'">
+  </div>
+  <div class="foot"><div class="foot-inner"><button class="btn btn-primary" id="ob4-next" onclick="goIngredients()" disabled>Start cooking</button><button class="btn-ghost" onclick="showScreen('s-ob3')">Back</button></div></div>
+</div>
+
+<!-- INPUT -->
+<div class="screen" id="s-input">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="content">
+    <div class="profile-bar" id="profile-greeting">
+      <div class="profile-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div><div class="profile-bar-text" style="font-weight:500;" id="greet-name"></div><div class="profile-bar-text" id="greet-sub" style="color:var(--teal-dark);font-size:11px;margin-top:1px"></div></div>
+    </div>
+    <div class="eyebrow">What is in your fridge?</div>
+    <div class="heading" style="font-size:22px;margin-bottom:6px">Tell us what you have</div>
+    <div class="subtext" style="margin-bottom:16px">Be as specific as you like. Quantities help us suggest the right portions.</div>
+    <div class="method-row">
+      <button class="method-pill active" onclick="switchMethod('build')" id="mp-build">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Build list
+      </button>
+      <button class="method-pill" onclick="switchMethod('photo')" id="mp-photo">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Photo
+      </button>
+      <button class="method-pill" onclick="switchMethod('voice')" id="mp-voice">
+        <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        Voice
+      </button>
+    </div>
+    <div class="input-panel active" id="panel-build">
+      <div class="quick-add-section">
+        <div class="quick-add-label">Quick add</div>
+        <div class="quick-row">
+          <button class="quick-tag" onclick="addIngredient('Eggs','each','unit')">Eggs</button>
+          <button class="quick-tag" onclick="addIngredient('Chicken breast','g','weight')">Chicken</button>
+          <button class="quick-tag" onclick="addIngredient('Rice','cup','volume')">Rice</button>
+          <button class="quick-tag" onclick="addIngredient('Pasta','g','weight')">Pasta</button>
+          <button class="quick-tag" onclick="addIngredient('Garlic','cloves','unit')">Garlic</button>
+          <button class="quick-tag" onclick="addIngredient('Onion','each','unit')">Onion</button>
+          <button class="quick-tag" onclick="addIngredient('Butter','g','weight')">Butter</button>
+          <button class="quick-tag" onclick="addIngredient('Tomatoes','each','unit')">Tomatoes</button>
+          <button class="quick-tag" onclick="addIngredient('Bell pepper','each','unit')">Bell pepper</button>
+          <button class="quick-tag" onclick="addIngredient('Spinach','cup','volume')">Spinach</button>
+          <button class="quick-tag" onclick="addIngredient('Cheddar cheese','g','weight')">Cheese</button>
+          <button class="quick-tag" onclick="addIngredient('Olive oil','tbsp','volume')">Olive oil</button>
+          <button class="quick-tag" onclick="addIngredient('Lemon','each','unit')">Lemon</button>
+          <button class="quick-tag" onclick="addIngredient('Milk','cup','volume')">Milk</button>
+        </div>
+      </div>
+      <div class="ingredient-builder">
+        <div class="ingredient-list-header">
+          <div class="ingredient-list-label">Your ingredients</div>
+          <div class="ingredient-count" id="ing-count">0 added</div>
+        </div>
+        <div id="ing-list"></div>
+        <div class="add-ingredient-row">
+          <input type="text" class="ingredient-search" id="ing-search" placeholder="Add another ingredient..." onkeydown="if(event.key==='Enter')addFromSearch()">
+          <button class="add-ing-btn" onclick="addFromSearch()">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="input-panel" id="panel-photo">
+      <div class="photo-preview-block" id="photo-preview-block">
+        <img id="photo-preview-img" src="" alt="">
+        <button class="photo-change" onclick="document.getElementById('photo-file').click()">Change photo</button>
+      </div>
+      <div class="photo-drop" id="photo-drop">
+        <input type="file" accept="image/*" capture="environment" id="photo-file" onchange="handlePhoto(event)">
+        <div class="photo-drop-icon"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="photo-drop-title">Open camera or choose photo</div>
+        <div class="photo-drop-sub">A clear shot of your open fridge works best</div>
+      </div>
+      <div class="privacy-note"><div class="privacy-dot"></div>Photo is processed immediately and never saved to our servers</div>
+    </div>
+    <div class="input-panel" id="panel-voice">
+      <div class="voice-center">
+        <div class="record-btn-outer" id="rec-outer" onclick="toggleVoice()">
+          <div class="record-btn-inner"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+        </div>
+        <div class="voice-state" id="v-state">Tap to speak</div>
+        <div class="voice-hint" id="v-hint">Say all the ingredients you have right now</div>
+        <div class="voice-box" id="v-box"></div>
+      </div>
+      <div class="privacy-note"><div class="privacy-dot"></div>Voice is transcribed locally in your browser and not recorded</div>
+    </div>
+    <div class="error-bar" id="err-bar"></div>
+  </div>
+  <div class="foot"><div class="foot-inner"><button class="btn btn-primary" onclick="findMeals()">Find my meals</button></div></div>
+</div>
+
+<!-- LOADING -->
+<div class="screen" id="s-loading">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div></div>
+  <div class="loading-content">
+    <div class="heading" style="margin-bottom:6px">One moment<span id="load-name-suffix"></span></div>
+    <div class="subtext" style="margin-bottom:0">Finding meals that fit your fridge and your style</div>
+    <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+    <div class="load-steps">
+      <div class="load-step" id="ls-1"><div class="step-pip"></div>Reading your ingredients</div>
+      <div class="load-step" id="ls-2"><div class="step-pip"></div>Checking your dietary preferences</div>
+      <div class="load-step" id="ls-3"><div class="step-pip"></div>Ranking by time and effort</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="s-results">
+  <div class="top-bar">
+    <div class="wordmark">Snap<em>Meal</em></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button onclick="showHistoryScreen()" style="background:none;border:none;cursor:pointer;font-size:11px;font-weight:500;color:var(--ink-40);font-family:var(--sans);letter-spacing:0.06em;text-transform:uppercase;">History</button>
+      <div class="beta-pill">Beta</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="results-head">
+      <div class="user-greeting" id="results-greeting"></div>
+      <div class="heading" style="font-size:24px;margin-bottom:4px">3 meals for tonight</div>
+      <div class="subtext" style="margin-bottom:0;font-size:12px" id="results-meta"></div>
+    </div>
+    <div id="meals-wrap"></div>
+    <div class="capture-card" id="email-capture-card">
+      <div class="capture-eyebrow">Get your recipe by email</div>
+      <div class="capture-heading">Keep a copy of what you made</div>
+      <div class="capture-sub">Enter your email and we send you the full recipe. We will also let you know when the full app launches.</div>
+      <div class="email-row">
+        <input type="email" class="email-input" id="email-field" placeholder="your@email.com">
+        <button class="email-submit" onclick="captureEmail()">Send it</button>
+      </div>
+      <div class="capture-legal">No spam. Your recipe plus early access only.</div>
+    </div>
+    <button class="btn btn-secondary" style="margin-bottom:8px" onclick="showScreen('s-survey')">Leave feedback on this test</button>
+    <button class="btn-ghost" onclick="startOver()">Try different ingredients</button>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="s-history">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div><div class="beta-pill">Beta</div></div>
+  <div class="content">
+    <div class="heading" style="font-size:22px;margin-bottom:6px">Your cooking history</div>
+    <div class="subtext" style="margin-bottom:20px">Every meal you marked as made, saved here on this device.</div>
+    <div id="history-list"></div>
+    <button class="btn-ghost" onclick="showScreen('s-results')" style="margin-top:16px">Back to results</button>
+  </div>
+</div>
+
+<!-- SURVEY -->
+<div class="screen" id="s-survey">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div></div>
+  <div class="content">
+    <div class="eyebrow" style="margin-bottom:8px">Feedback</div>
+    <div class="heading" style="font-size:22px">How did it go?</div>
+    <div class="subtext">Honest and direct. Under 90 seconds.</div>
+    <div class="q-block">
+      <div class="survey-q">How useful were the meal suggestions?</div>
+      <div class="scale-row" id="sq-1">
+        <button class="scale-n" onclick="rate('sq-1',1,this)">1</button>
+        <button class="scale-n" onclick="rate('sq-1',2,this)">2</button>
+        <button class="scale-n" onclick="rate('sq-1',3,this)">3</button>
+        <button class="scale-n" onclick="rate('sq-1',4,this)">4</button>
+        <button class="scale-n" onclick="rate('sq-1',5,this)">5</button>
+      </div>
+      <div class="scale-ends"><span>Not useful</span><span>Very useful</span></div>
+    </div>
+    <div class="q-block">
+      <div class="survey-q">Did the suggestions match what you actually have at home?</div>
+      <div class="opt-list" id="sq-2">
+        <button class="opt-btn" onclick="pick2('sq-2',this)">Yes, they matched well</button>
+        <button class="opt-btn" onclick="pick2('sq-2',this)">Mostly, a couple were off</button>
+        <button class="opt-btn" onclick="pick2('sq-2',this)">Not really</button>
+      </div>
+    </div>
+    <div class="q-block">
+      <div class="survey-q">Would you use something like this regularly?</div>
+      <div class="opt-list" id="sq-3">
+        <button class="opt-btn" onclick="pick2('sq-3',this)">Definitely, this solves a real problem</button>
+        <button class="opt-btn" onclick="pick2('sq-3',this)">Probably yes</button>
+        <button class="opt-btn" onclick="pick2('sq-3',this)">Maybe, needs improvement</button>
+        <button class="opt-btn" onclick="pick2('sq-3',this)">Probably not</button>
+      </div>
+    </div>
+    <div class="q-block">
+      <div class="survey-q">What is the one thing that would make this actually useful for you?</div>
+      <textarea class="open-field" id="sq-4" placeholder="Be direct. This is an early test and your feedback shapes what gets built."></textarea>
+    </div>
+    <div class="q-block">
+      <div class="survey-q">If this actually worked for you, what would you pay per month?</div>
+      <div class="opt-list" id="sq-5" style="margin-bottom:10px">
+        <button class="opt-btn" onclick="pick2('sq-5',this)">Nothing, it should be free</button>
+        <button class="opt-btn" onclick="pick2('sq-5',this)">Under $3 a month</button>
+        <button class="opt-btn" onclick="pick2('sq-5',this)">$4 to $6 a month</button>
+        <button class="opt-btn" onclick="pick2('sq-5',this)">$7 to $10 a month</button>
+        <button class="opt-btn" onclick="pick2('sq-5',this)">More than $10 a month</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-40);margin-bottom:6px;font-weight:400">Or type your own number</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px;color:var(--ink-40)">$</span>
+        <input type="number" id="sq-5-custom" min="0" max="999" placeholder="e.g. 3.50" style="border:1.5px solid var(--ink-15);border-radius:4px;padding:9px 12px;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--cream);outline:none;width:120px;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--ink-15)'">
+        <span style="font-size:13px;color:var(--ink-40);font-weight:300">per month</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-inner">
+    <button class="btn btn-primary" onclick="submitSurvey()">Submit feedback</button>
+    <button class="btn-ghost" onclick="showScreen('s-results')">Back to results</button>
+  </div></div>
+</div>
+
+<!-- THANKS -->
+<div class="screen" id="s-thanks">
+  <div class="top-bar"><div class="wordmark">Snap<em>Meal</em></div></div>
+  <div class="thanks-content">
+    <div class="thanks-rule"></div>
+    <div class="thanks-h">Thank you<span id="thanks-name"></span></div>
+    <div class="thanks-p">Your feedback goes directly into what gets built next. You are part of making this real and we will be in touch when the full app launches.</div>
+    <button class="btn btn-primary" style="max-width:240px" onclick="startOver()">Test again</button>
+  </div>
+</div>
+
+<!-- CHAT FAB + DRAWER -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()">
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+<div class="chat-overlay" id="chat-overlay" onclick="toggleChat()"></div>
+<div class="chat-drawer" id="chat-drawer">
+  <div class="chat-drawer-header">
+    <div>
+      <div class="chat-drawer-title">Ask while you cook</div>
+      <div class="chat-drawer-sub" id="chat-context-label">Ask anything about your recipe</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">&#215;</button>
+  </div>
+  <div class="chat-suggestions" id="chat-suggestions">
+    <button class="chat-sug" onclick="sendSuggestion(this)">Can I substitute something?</button>
+    <button class="chat-sug" onclick="sendSuggestion(this)">How do I know when it is done?</button>
+    <button class="chat-sug" onclick="sendSuggestion(this)">What if I am missing an ingredient?</button>
+    <button class="chat-sug" onclick="sendSuggestion(this)">How do I make it spicier?</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-row">
+    <input type="text" class="chat-input" id="chat-input" placeholder="Ask anything about your meal..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const state = {
+  freq:null, skill:null, dietary:[], servings:null, name:'',
+  method:'build', ingredients:[], photoB64:'', voiceText:'',
+  currentMeals:[], currentQuickPick:null, survey:{}, email:'',
+  history: JSON.parse(localStorage.getItem('sm_history')||'[]'),
+  chatContext:''
+};
+
+// Wake lock
+let wakeLock = null;
+async function requestWakeLock() { if('wakeLock' in navigator){try{wakeLock=await navigator.wakeLock.request('screen');}catch{}} }
+async function releaseWakeLock() { if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;} }
+document.addEventListener('visibilitychange',async()=>{ if(wakeLock&&document.visibilityState==='visible') await requestWakeLock(); });
+
+// Screen nav
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  const onResults = id==='s-results';
+  document.getElementById('chat-fab').classList.toggle('visible',onResults);
+  if(!onResults){releaseWakeLock();closeChatDrawer();}
+}
+
+// Onboarding
+function pick(g,el,val){
+  document.querySelectorAll('#'+g+' .choice-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+  if(g==='cook-freq'){state.freq=val;document.getElementById('ob1-next').disabled=false;}
+}
+function pickGrid(g,el,val){
+  document.querySelectorAll('#'+g+' .choice-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  if(g==='skill-level'){state.skill=val;document.getElementById('ob2-next').disabled=false;}
+  if(g==='serving-size'){state.servings=val;checkOb3();}
+}
+function toggleTag(el,val){
+  el.classList.toggle('selected');
+  if(val==='none'){
+    document.querySelectorAll('#dietary-tags .tag-btn').forEach(t=>{if(t!==el)t.classList.remove('selected');});
+    state.dietary=el.classList.contains('selected')?['none']:[];
+  } else {
+    document.querySelector('#dietary-tags .tag-btn').classList.remove('selected');
+    state.dietary=[...document.querySelectorAll('#dietary-tags .tag-btn.selected')].map(t=>t.textContent);
+  }
+  checkOb3();
+}
+function checkOb3(){
+  const hasDiet=document.querySelectorAll('#dietary-tags .tag-btn.selected').length>0;
+  document.getElementById('ob3-next').disabled=!(state.servings&&hasDiet);
+}
+function checkName(){state.name=document.getElementById('user-name').value.trim();document.getElementById('ob4-next').disabled=state.name.length<1;}
+function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function servingText(){return{'1':'1 serving','2':'2 servings','family':'3 to 4 servings','crowd':'5 or more servings'}[state.servings]||'';}
+function goIngredients(){
+  state.name=document.getElementById('user-name').value.trim();
+  document.getElementById('greet-name').textContent=state.name;
+  const d=state.dietary.length>0?state.dietary.join(', '):'No restrictions';
+  document.getElementById('greet-sub').textContent=`${capitalize(state.skill)} cook · ${d} · ${servingText()}`;
+  showScreen('s-input');
+}
+
+// Method switch
+function switchMethod(m){
+  state.method=m;
+  ['build','photo','voice'].forEach(x=>{
+    document.getElementById('mp-'+x).classList.toggle('active',x===m);
+    document.getElementById('panel-'+x).classList.toggle('active',x===m);
+  });
+}
+
+// Ingredient builder
+function addIngredient(name,unit,type,qty=1){
+  if(state.ingredients.find(i=>i.name.toLowerCase()===name.toLowerCase()))return;
+  state.ingredients.push({name,qty,unit});
+  renderIngredients();
+}
+function addFromSearch(){
+  const input=document.getElementById('ing-search');
+  const val=input.value.trim();
+  if(!val)return;
+  addIngredient(val,'each','unit');
+  input.value='';input.focus();
+}
+function changeQty(idx,delta){
+  state.ingredients[idx].qty=Math.max(0,state.ingredients[idx].qty+delta);
+  if(state.ingredients[idx].qty===0)state.ingredients.splice(idx,1);
+  renderIngredients();
+}
+function removeIng(idx){state.ingredients.splice(idx,1);renderIngredients();}
+function renderIngredients(){
+  const list=document.getElementById('ing-list');
+  const count=document.getElementById('ing-count');
+  count.textContent=`${state.ingredients.length} added`;
+  list.innerHTML=state.ingredients.map((ing,i)=>`
+    <div class="ingredient-row-item">
+      <div class="ingredient-name">${ing.name}</div>
+      <div class="ingredient-qty">
+        <button class="qty-btn" onclick="changeQty(${i},-1)">&#8722;</button>
+        <div class="qty-num">${ing.qty}</div>
+        <div class="qty-unit">${ing.unit}</div>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+      </div>
+      <button class="remove-btn" onclick="removeIng(${i})"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+}
+
+// Photo
+function handlePhoto(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    state.photoB64=ev.target.result;
+    document.getElementById('photo-preview-img').src=state.photoB64;
+    document.getElementById('photo-preview-block').style.display='block';
+    document.getElementById('photo-drop').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Voice
+let isRecording=false,recog=null;
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
+    document.getElementById('v-state').textContent='Voice not supported';
+    document.getElementById('v-hint').textContent='Please use Chrome or switch to text input';return;
+  }
+  if(isRecording){recog.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();recog.continuous=true;recog.interimResults=true;recog.lang='en-US';
+  recog.onstart=()=>{isRecording=true;document.getElementById('rec-outer').classList.add('recording');document.getElementById('v-state').textContent='Listening...';document.getElementById('v-hint').textContent='Tap to stop';document.getElementById('v-box').style.display='block';};
+  recog.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;state.voiceText=t;document.getElementById('v-box').textContent=t;};
+  recog.onend=()=>{isRecording=false;document.getElementById('rec-outer').classList.remove('recording');document.getElementById('v-state').textContent=state.voiceText?'Ingredients captured':'Tap to record again';document.getElementById('v-hint').textContent=state.voiceText?'Tap to record again if needed':'Nothing was recorded';};
+  recog.start();
+}
+
+// Find meals
+function getIngredientString(){
+  if(state.method==='build')return state.ingredients.map(i=>`${i.qty} ${i.unit} ${i.name}`).join(', ');
+  if(state.method==='photo')return state.photoB64?'__photo__':'';
+  return state.voiceText.trim();
+}
+function showError(msg){const el=document.getElementById('err-bar');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',4000);}
+function findMeals(){
+  const ing=getIngredientString();
+  if(!ing){if(state.method==='build')showError('Add at least one ingredient before continuing.');else if(state.method==='photo')showError('Please take or select a photo of your fridge first.');else showError('Please record your ingredients before continuing.');return;}
+  document.getElementById('load-name-suffix').textContent=state.name?`, ${state.name}`:'';
+  showScreen('s-loading');animateLoad();callAI(ing);
+}
+function animateLoad(){
+  const bar=document.getElementById('load-bar');bar.style.width='10%';
+  ['ls-1','ls-2','ls-3'].forEach((id,i)=>{setTimeout(()=>{document.getElementById(id).classList.add('on');bar.style.width=(25+i*30)+'%';},(i+1)*700);});
+  setTimeout(()=>{'ls-1,ls-2,ls-3'.split(',').forEach(id=>{document.getElementById(id.trim()).classList.remove('on');document.getElementById(id.trim()).classList.add('done');});bar.style.width='100%';},2800);
+}
+
+// AI call
+async function callAI(ingredients){
+  const isPhoto=ingredients==='__photo__';
+  const dietary=state.dietary.length?state.dietary.join(', '):'no restrictions';
+  const skill=state.skill||'home cook';
+  const servings=servingText();
+  const sys=`You are SnapMeal, an ingredient-first cooking assistant. Turn what someone has into meals they will actually make tonight.
+RULES: 1) Only use ingredients the user has plus salt, pepper, oil, water, basic spices. 2) Return exactly 3 meals. 3) Rank by speed, fastest first. 4) Match difficulty to ${skill}. 5) Honor dietary restrictions: ${dietary}. 6) Steps: exactly 3, under 20 words each, active voice. 7) elevation_tip: one practical tip a good cook would give. 8) swap: one substitution or empty string. 9) missing: only truly needed items, empty array if nothing is missing. 10) Return ONLY valid JSON, no markdown.`;
+  const usr=`Name: ${state.name||'User'}, Skill: ${skill}, Dietary: ${dietary}, Serving: ${servings}, ${isPhoto?'Input: fridge photo, assume well stocked home fridge':`Ingredients: ${ingredients}`}
+Return: {"quick_pick":{"name":"","reason":""},"meals":[{"name":"","minutes":0,"difficulty":"","badge":"","description":"","missing":[],"steps":["","",""],"elevation_tip":"","swap":""}]}
+Badge values: "Fastest" or "Under 30 min" or "Worth the effort"`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:sys,messages:[{role:'user',content:usr}]})});
+    const data=await res.json();const raw=data.content?.[0]?.text||'';
+    let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{parsed=fallbackMeals();}
+    renderResults(parsed,ingredients);
+  }catch{renderResults(fallbackMeals(),ingredients);}
+}
+
+function fallbackMeals(){return{quick_pick:{name:"Garlic butter eggs",reason:"Fastest thing you can make right now and it actually tastes good."},meals:[{name:"Garlic butter eggs",minutes:8,difficulty:"Easy",badge:"Fastest",description:"Simple, rich, and done before you would even open DoorDash.",missing:[],steps:["Crack eggs into a bowl, season with salt and pepper.","Melt butter, sauté garlic 30 seconds until fragrant.","Add eggs, stir gently on low heat until just set."],elevation_tip:"A pinch of smoked paprika on top changes everything.",swap:"No butter? A tablespoon of olive oil works just as well."},{name:"Stir-fried vegetables with rice",minutes:18,difficulty:"Easy",badge:"Under 30 min",description:"Clean and light, works with whatever vegetables you have.",missing:[],steps:["Cook rice in salted water while you prep vegetables.","Heat oil on high, add vegetables and stir constantly.","Season well, serve over rice once vegetables are tender."],elevation_tip:"A splash of soy sauce in the last 30 seconds makes it.",swap:""},{name:"Pan-fried chicken with roasted vegetables",minutes:28,difficulty:"Medium",badge:"Worth the effort",description:"A proper dinner that comes together in one pan.",missing:[],steps:["Season chicken thoroughly, heat oil until shimmering.","Sear chicken 4 minutes each side until golden brown.","Add vegetables, cook 12 more minutes until everything is done."],elevation_tip:"Squeeze half a lemon over everything right before serving.",swap:"No chicken? This works with any firm protein including tofu, fish, or pork."}]};}
+
+const mvClass=['mv-1','mv-2','mv-3'];
+
+function renderResults(data,ingredients){
+  state.currentMeals=data.meals||[];state.currentQuickPick=data.quick_pick||null;
+  const ingList=state.method==='build'?state.ingredients.map(i=>`${i.qty} ${i.unit} ${i.name}`).join(', '):state.voiceText||'fridge photo';
+  state.chatContext=`User has: ${ingList}. Meals suggested: ${state.currentMeals.map(m=>m.name).join(', ')}. User skill: ${state.skill}. Dietary: ${state.dietary.join(', ')||'none'}.`;
+  document.getElementById('chat-context-label').textContent=`About your ${state.currentMeals[0]?.name||'meal'}`;
+  document.getElementById('results-greeting').textContent=state.name?`For ${state.name} · ${state.skill?capitalize(state.skill)+' cook':''} · ${servingText()}`:'';
+  document.getElementById('results-meta').textContent=ingredients==='__photo__'?'Based on your fridge photo':state.method==='voice'?`Based on: "${state.voiceText.substring(0,55)}${state.voiceText.length>55?'...':''}"`:`${state.ingredients.length} ingredients · sorted by speed`;
+  const wrap=document.getElementById('meals-wrap');wrap.innerHTML='';
+  if(state.currentQuickPick?.name){const b=document.createElement('div');b.className='quick-pick-banner';b.innerHTML=`<div class="qp-eyebrow">Make this tonight</div><div class="qp-name">${state.currentQuickPick.name}</div><div class="qp-reason">${state.currentQuickPick.reason}</div>`;wrap.appendChild(b);}
+  state.currentMeals.forEach((meal,i)=>{
+    const hasMissing=meal.missing&&meal.missing.length>0;
+    const hasSwap=meal.swap&&meal.swap.trim().length>0;
+    const hasElev=meal.elevation_tip&&meal.elevation_tip.trim().length>0;
+    const card=document.createElement('div');
+    card.className='meal-card'+(i===0?' featured':'');card.id='mc-'+i;
+    card.innerHTML=`
+      <div class="meal-visual ${mvClass[i]}">
+        <div class="meal-visual-inner">
+          <div class="meal-visual-num">0${i+1}</div>
+          <div class="meal-visual-name">${meal.name}</div>
+        </div>
+      </div>
+      <div class="meal-body" onclick="toggleCard(${i})">
+        <div class="meal-top"><span class="meal-badge">${meal.badge}</span><span class="meal-time-tag">${meal.minutes} min</span></div>
+        <div class="meal-name">${meal.name}</div>
+        <div class="meal-diff">${meal.description||''}</div>
+        ${hasMissing?`<div class="missing-tag">Missing: ${meal.missing.join(', ')}</div>`:''}
+      </div>
+      <div class="expand-row" onclick="toggleCard(${i})"><span class="expand-label">View recipe</span><svg class="chevron-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="steps-panel">
+        <div class="steps-inner">
+          <div class="steps-label">Tap each step as you go</div>
+          ${meal.steps.map((s,j)=>`<div class="step-line" id="sl-${i}-${j}" onclick="checkStep(${i},${j},${meal.steps.length})"><div class="step-check"><div class="step-check-inner"></div></div><div class="step-t">${s}</div></div>`).join('')}
+          ${hasElev?`<div class="elevation-tip"><strong>To elevate it:</strong> ${meal.elevation_tip}</div>`:''}
+          ${hasSwap?`<div class="swap-note"><strong>Swap:</strong> ${meal.swap}</div>`:''}
+          <button class="made-btn" id="mb-${i}" onclick="madeIt(${i},event)" disabled>Check off all steps first</button>
+        </div>
+      </div>`;
+    card._steps=meal.steps.length;card._checked=0;
+    wrap.appendChild(card);
+  });
+  requestWakeLock();
+  postToWebhook({type:'meal_suggestion',name:state.name,profile:{freq:state.freq,skill:state.skill,dietary:state.dietary,servings:state.servings},ingredients:ingList,meals:state.currentMeals.map(m=>m.name),quick_pick:state.currentQuickPick?.name,ts:new Date().toISOString()});
+  showScreen('s-results');
+}
+
+function toggleCard(i){document.getElementById('mc-'+i).classList.toggle('open');}
+
+function checkStep(mealIdx,stepIdx,totalSteps){
+  const step=document.getElementById(`sl-${mealIdx}-${stepIdx}`);
+  const card=document.getElementById(`mc-${mealIdx}`);
+  const wasChecked=step.classList.contains('checked');
+  step.classList.toggle('checked');
+  card._checked=(card._checked||0)+(wasChecked?-1:1);
+  const btn=document.getElementById(`mb-${mealIdx}`);
+  const allDone=card._checked>=card._steps;
+  btn.disabled=!allDone;
+  btn.textContent=allDone?'I made this':`${card._checked} of ${card._steps} steps done`;
+}
+
+function madeIt(i,e){
+  e.stopPropagation();
+  const btn=document.getElementById('mb-'+i);
+  const meal=state.currentMeals[i];
+  btn.textContent='Marked as cooked';btn.classList.add('done');btn.disabled=true;
+  const entry={name:meal.name,minutes:meal.minutes,date:new Date().toLocaleDateString(),ts:Date.now()};
+  state.history.unshift(entry);
+  localStorage.setItem('sm_history',JSON.stringify(state.history.slice(0,50)));
+  postToWebhook({type:'meal_cooked',name:state.name,email:state.email,meal:meal.name,ts:new Date().toISOString()});
+  releaseWakeLock();
+  setTimeout(()=>showScreen('s-survey'),1000);
+}
+
+function showHistoryScreen(){
+  const list=document.getElementById('history-list');
+  if(state.history.length===0){list.innerHTML='<div class="history-empty">No meals cooked yet.<br>Make something and mark it as done<br>and it will appear here.</div>';}
+  else{list.innerHTML=state.history.map(h=>`<div class="history-item"><div class="history-meal-name">${h.name}</div><div class="history-meta">${h.date} · ${h.minutes} min</div></div>`).join('');}
+  showScreen('s-history');
+}
+
+// Chat
+let chatOpen=false;const chatHistory=[];
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('chat-drawer').classList.toggle('open',chatOpen);document.getElementById('chat-overlay').classList.toggle('visible',chatOpen);if(chatOpen&&chatHistory.length===0)addChatMsg('ai',`Hi ${state.name||'there'}! I know your recipe. Ask me anything while you cook.`);}
+function closeChatDrawer(){chatOpen=false;document.getElementById('chat-drawer').classList.remove('open');document.getElementById('chat-overlay').classList.remove('visible');}
+function addChatMsg(role,text){const msgs=document.getElementById('chat-messages');const div=document.createElement('div');div.className=`chat-msg ${role}`;div.textContent=text;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return div;}
+function sendSuggestion(el){document.getElementById('chat-input').value=el.textContent;sendChat();}
+async function sendChat(){
+  const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg)return;
+  input.value='';addChatMsg('user',msg);chatHistory.push({role:'user',content:msg});
+  const loadDiv=addChatMsg('ai loading','Thinking...');
+  const sys=`You are a cooking assistant. Context: ${state.chatContext}. Answer in 1 to 3 short sentences. Be direct and practical. No filler.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:chatHistory.slice(-6)})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'Sorry, try again.';
+    loadDiv.classList.remove('loading');loadDiv.textContent=reply;chatHistory.push({role:'assistant',content:reply});
+  }catch{loadDiv.textContent='Connection issue. Try again.';loadDiv.classList.remove('loading');}
+}
+
+// Email
+function captureEmail(){
+  const email=document.getElementById('email-field').value.trim();
+  if(!email||!email.includes('@')){document.getElementById('email-field').style.borderColor='#c0392b';return;}
+  state.email=email;
+  postToWebhook({type:'email_capture',name:state.name,email,profile:{freq:state.freq,skill:state.skill,dietary:state.dietary,servings:state.servings},meals:state.currentMeals.map(m=>m.name),ts:new Date().toISOString()});
+  document.getElementById('email-capture-card').innerHTML=`<div class="capture-eyebrow">Sent</div><div class="capture-heading" style="font-size:16px">Recipe is on its way</div><div class="capture-sub" style="margin-bottom:0">Check your inbox. We will also send you early access when the full app launches.</div>`;
+}
+
+// Webhook
+const WEBHOOK_URL=''; // paste your Zapier or Make.com webhook URL here
+async function postToWebhook(payload){if(!WEBHOOK_URL){console.log('SnapMeal data:',JSON.stringify(payload,null,2));return;}try{await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}catch{}}
+
+// Survey
+function rate(qid,val,el){state.survey[qid]=val;document.querySelectorAll('#'+qid+' .scale-n').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function pick2(qid,el){state.survey[qid]=el.textContent;document.querySelectorAll('#'+qid+' .opt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function submitSurvey(){
+  const customPrice=document.getElementById('sq-5-custom').value.trim();
+  state.survey.open=document.getElementById('sq-4').value;
+  state.survey.price_option=state.survey['sq-5']||'';
+  state.survey.price_custom=customPrice?`$${customPrice}/month`:'';
+  state.survey.price_final=customPrice?`$${customPrice}/month`:state.survey['sq-5']||'not answered';
+  state.survey.email=state.email;
+  state.survey.profile={name:state.name,freq:state.freq,skill:state.skill,dietary:state.dietary,servings:state.servings};
+  state.survey.ingredients=state.method==='build'?state.ingredients:state.voiceText;
+  state.survey.meals=state.currentMeals.map(m=>m.name);
+  state.survey.ts=new Date().toISOString();
+  postToWebhook({type:'survey',...state.survey});
+  document.getElementById('thanks-name').textContent=state.name?`, ${state.name}`:'';
+  showScreen('s-thanks');
+}
+
+// Reset
+function startOver(){
+  releaseWakeLock();closeChatDrawer();
+  state.ingredients=[];state.photoB64='';state.voiceText='';state.survey={};state.currentMeals=[];chatHistory.length=0;
+  renderIngredients();
+  document.getElementById('v-box').style.display='none';document.getElementById('v-box').textContent='';
+  document.getElementById('v-state').textContent='Tap to speak';
+  document.getElementById('photo-preview-block').style.display='none';
+  document.getElementById('photo-drop').style.display='block';
+  switchMethod('build');showScreen('s-input');
+}
+</script>
+</body>
+</html>
