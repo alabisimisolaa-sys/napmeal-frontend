@@ -842,7 +842,7 @@ async function sendChat(){
   const loadDiv=addChatMsg('ai loading','Thinking...');
   const sys=`You are a cooking assistant. Context: ${state.chatContext}. Answer in 1 to 3 short sentences. Be direct and practical. No filler.`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'YOUR_ANTHROPIC_API_KEY_HERE','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:chatHistory.slice(-6)})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:chatHistory.slice(-6)})});
     const data=await res.json();const reply=data.content?.[0]?.text||'Sorry, try again.';
     loadDiv.classList.remove('loading');loadDiv.textContent=reply;chatHistory.push({role:'assistant',content:reply});
   }catch{loadDiv.textContent='Connection issue. Try again.';loadDiv.classList.remove('loading');}
