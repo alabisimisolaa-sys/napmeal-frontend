@@ -829,7 +829,7 @@ function showHistoryScreen(){
   else{list.innerHTML=state.history.map(h=>`<div class="history-item"><div class="history-meal-name">${h.name}</div><div class="history-meta">${h.date} · ${h.minutes} min</div></div>`).join('');}
   showScreen('s-history');
 }
-
+const WEBHOOK_URL = 'https://primary-production-80344.up.railway.app/webhook/89135ef6-9558-4536-96ed-4e796bf1b4ba';
 // Chat
 let chatOpen=false;const chatHistory=[];
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('chat-drawer').classList.toggle('open',chatOpen);document.getElementById('chat-overlay').classList.toggle('visible',chatOpen);if(chatOpen&&chatHistory.length===0)addChatMsg('ai',`Hi ${state.name||'there'}! I know your recipe. Ask me anything while you cook.`);}
@@ -858,7 +858,8 @@ function captureEmail(){
 }
 
 // Webhook
-const WEBHOOK_URL=''; // paste your Zapier or Make.com webhook URL here
+// Webhook
+const WEBHOOK_URL = 'https://primary-production-80344.up.railway.app/webhook/89135ef6-9558-4536-96ed-4e796bf1b4ba' ;
 async function postToWebhook(payload){if(!WEBHOOK_URL){console.log('SnapMeal data:',JSON.stringify(payload,null,2));return;}try{await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}catch{}}
 
 // Survey
